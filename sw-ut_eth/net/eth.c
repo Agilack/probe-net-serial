@@ -226,14 +226,14 @@ void eth_tx_packet(void)
 	while(1)
 	{
 		u8 v;
+		/* Read back ECON1 to get TXRTS value */
+		v = enc_rcr(0x1E);
+		/* If TXRTS is cleared, transmit is finished */
 		v = enc_rcr(0x1C);
-		if (v & 0x08)
+		if ((v & 0x02) == 0)
 			break;
 	}
 	eth_status.tx = 0;
-	/* Clear TXIF flag */
-	enc_bxsel(0);
-	enc_bfsc(0x1C, 0x08, 0);
 #endif
 }
 

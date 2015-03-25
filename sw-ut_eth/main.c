@@ -29,8 +29,9 @@ int main(void)
 
 	tm_notify    = 0;
 
-	uart_puts("  - Init Ethernet\r\n");
+	uart_puts("  - Init Ethernet: ");
 	eth_init();
+	uart_puts("ok\r\n");
 
 	hw_tim2_init();
 	

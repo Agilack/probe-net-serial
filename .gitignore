@@ -1,0 +1,9 @@
+# Compiled files
+*.o
+*.ko
+*.elf
+*.map
+
+# Editor temporary
+*~
+*.kdev4

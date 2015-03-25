@@ -15,7 +15,7 @@
 #define _ETH_H_
 
 #define ETH_FRAME_SIZE 768
-#define ETH_IT_TX 1
+#undef ETH_IT_TX
 
 typedef struct _s_eth_status
 {

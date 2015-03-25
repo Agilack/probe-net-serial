@@ -68,17 +68,6 @@ void hw_setup_irq(int n)
 		
 		reg_wr(0xE000E100, (1 << 23) ); /* NVIC: Enable EXTI9_5 interrupt */
 	}
-	else if (n == 9)
-	{
-		/* Configure External Interrupt (IRQ) from TRF7970 */
-		reg_wr(AFIO_EXTI_CR3, 0x0100);  /* AFIO: Port B for EXTI-10 */
-		reg_set(EXTI_RTSR, 0x00000400); /* Trigger on Rising edge, TR10 */
-		reg_wr (EXTI_PR,   0x00000400); /* Clear the Pending Register   */
-		reg_set(EXTI_IMR,  0x00000400);
-		
-		reg_wr(0xE000E104, 0x100 ); /* NVIC: Enable EXTI15_10 interrupt */
-	}
-	
 }
 
 static void hw_setup_clock(void)

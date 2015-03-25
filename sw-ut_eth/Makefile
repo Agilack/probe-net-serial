@@ -43,8 +43,6 @@ elf: $(TARGET).elf
 env:
 	mkdir -p $(BUILDDIR)
 	mkdir -p $(BUILDDIR)/net
-	mkdir -p $(BUILDDIR)/rfid
-	mkdir -p $(BUILDDIR)/rtos
 
 # Create final output file (.hex) from ELF output file.
 %.hex: %.elf
