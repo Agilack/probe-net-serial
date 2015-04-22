@@ -6,3 +6,5 @@ Ethernet to serial adapter. Allow remote control of a serial port (remote consol
  * sw-ut_eth: Unit test for ethernet driver
 
  * sw-ut_eth_uip: Unit test of uIP with ethernet interface
+
+ * sw-ut_oled: Unit test for OLED 0.91' display
