@@ -15,7 +15,6 @@
 #include "main.h"
 
 static void hw_setup_ios(void);
-void hw_setup_clock(void);
 
 u32 reg_rd(u32 reg)
 {
@@ -83,16 +82,16 @@ void hw_setup_irq(int n)
 void hw_setup_clock(void)
 {
 	/* Activate HSE */
-//	reg_set(RCC_CR, 0x00010001);
+	reg_set(RCC_CR, 0x00010001);
 	/* Wait the activation complete */
-//	while ((reg_rd(RCC_CR) & 0x00020000) == 0)
-//		;
+	while ((reg_rd(RCC_CR) & 0x00020000) == 0)
+		;
 
 	/* Enable flash prefetch buffer */
 	reg_wr(FLASH_ACR, 0x00000012);
 
 	/* Configure PLL */
-	reg_set(RCC_CFGR, 0x001C2400); /* pll=72Mhz,APB1=36Mhz,APB2=36Mhz,AHB=72Mhz */
+	reg_set(RCC_CFGR, 0x001D2400); /* pll=72Mhz,APB1=36Mhz,APB2=36Mhz,AHB=72Mhz */
 	reg_set(RCC_CR,   0x01000000); /* enable the pll */
 	/* wait for it to come on */
 	while ((reg_rd(RCC_CR) & 0x03000000) == 0)

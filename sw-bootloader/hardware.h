@@ -97,6 +97,7 @@ typedef volatile unsigned long  vu32;
 typedef volatile unsigned short vu16;
 
 void hw_init(void);
+void hw_setup_clock(void);
 void hw_setup_irq(int n);
 void hw_tim2_init(void);
 

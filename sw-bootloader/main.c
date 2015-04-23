@@ -92,6 +92,11 @@ static void boot_normal(void)
 	fpnt = (void (*)(void))ad;
 	uart_puthex(ad); uart_crlf();
 	
+	/* Switch to High Speed External oscillator */
+	hw_setup_clock();
+	/* Fix UART speed */
+	reg_wr(UART_BRR, 0x0120);
+	
 	/* Update MSP */
 	__MSR_MSP(*(vu32 *)0x08005000);
 	/* Call it ...*/

@@ -111,6 +111,15 @@ LoopFillZerobss:
 	bx	lr
 .size	Reset_Handler, .-Reset_Handler
 
+
+    .section	.api_vector
+	.type	Api_Handler, %function
+Api_Handler:
+	.word	uart_rd
+	.word	uart_putc
+	.word	uart_puts
+	.word	uart_puthex
+
 /**
  * @brief  This is the code that gets called when the processor receives an
  *         unexpected interrupt.  This simply enters an infinite loop, preserving
@@ -135,9 +144,6 @@ Infinite_Loop:
 	.type	g_pfnVectors, %object
 	.size	g_pfnVectors, .-g_pfnVectors
 
-.extern xPortSysTickHandler
-.extern vPortSVCHandler
-.extern xPortPendSVHandler
 //.extern Default_Handler
 
 g_pfnVectors:
@@ -152,11 +158,11 @@ g_pfnVectors:
 	.word	0
 	.word	0
 	.word	0
-	.word	vPortSVCHandler
+	.word	SVC_Handler
 	.word	DebugMon_Handler
 	.word	0
-	.word	xPortPendSVHandler
-	.word	xPortSysTickHandler
+	.word	PendSV_Handler
+	.word	SysTick_Handler
 	.word	WWDG_IRQHandler
 	.word	PVD_IRQHandler
 	.word	TAMPER_IRQHandler
@@ -230,24 +236,26 @@ g_pfnVectors:
 *
 *******************************************************************************/
 
-  .weak	NMI_Handler
+	.weak	NMI_Handler
 	.thumb_set NMI_Handler,Default_Handler
 
-  .weak	HardFault_Handler
+	.weak	HardFault_Handler
 	.thumb_set HardFault_Handler,Default_Handler
 
-  .weak	MemManage_Handler
+	.weak	MemManage_Handler
 	.thumb_set MemManage_Handler,Default_Handler
 
-  .weak	BusFault_Handler
+	.weak	BusFault_Handler
 	.thumb_set BusFault_Handler,Default_Handler
 
-	.weak	vPortSVCHandler
-	.thumb_set vPortSVCHandler,Default_Handler
-	.weak	xPortPendSVHandler
-	.thumb_set xPortPendSVHandler,Default_Handler
-	.weak	xPortSysTickHandler
-	.thumb_set xPortSysTickHandler,Default_Handler
+	.weak	SVC_Handler
+	.thumb_set SVC_Handler,Default_Handler
+
+	.weak	PendSV_Handler
+	.thumb_set PendSV_Handler,Default_Handler
+
+	.weak	SysTick_Handler
+	.thumb_set SysTick_Handler,Default_Handler
 
 	.weak	UsageFault_Handler
 	.thumb_set UsageFault_Handler,Default_Handler
@@ -383,8 +391,3 @@ g_pfnVectors:
 
 	.weak	USBWakeUp_IRQHandler
 	.thumb_set USBWakeUp_IRQHandler,Default_Handler
-
-/* 	.section	.config_page.values
-g_config_page:
-	.word	0x04
-*/
