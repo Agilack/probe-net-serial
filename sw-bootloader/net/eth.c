@@ -43,7 +43,6 @@ void dhcpc_appcall(void)
 
 int eth_init(void)
 {
-	s_spi *e_spi;
 	u8 v_lsb, v_msb;
 	int result;
 	
@@ -52,12 +51,9 @@ int eth_init(void)
 	eth_status.tx     = 0;
 	eth_events  = 0;
 
-	e_spi = spi_open(SPI2);
+	spi_open(SPI2);
 	
-	enc_init(e_spi);
-uart_puts("-");
 	result = enc_reset();
-uart_puts("_");
 	if (result)
 	{
 		uart_puts("eth_init(): Failed into enc_reset() ");

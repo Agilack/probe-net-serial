@@ -16,7 +16,6 @@
 
 #define ENC_PT_GPWR 0x0C
 
-void enc_init (s_spi *e_spi);
 int  enc_reset(void);
 void enc_bxsel(int n);
 void enc_sbi  (u32 cmd);

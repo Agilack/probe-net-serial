@@ -14,18 +14,21 @@
 #ifndef SPI_H
 #define SPI_H
 
-typedef struct _s_spi
-{
-	void (*cs)    (int en);
-	u8   (*rd)    (void);
-	void (*wr)    (u32 data);
-	void (*wait)  (void);
-	void (*flush) (void);
-} s_spi;
+void spi_init(void);
+void spi_open(u32 port);
+void spi_wr  (u32 port, u32 w);
+void spi_wait(u32 port);
 
-void    spi_init(void);
-s_spi * spi_open(u32 port);
-void    spi_wr  (u32 port, u32 w);
-void    spi_wait(u32 port);
+void spi1_cs(int en);
+void spi1_wr(u32 data);
+u8   spi1_rd(void);
+void spi1_wait(void);
+void spi1_flush(void);
+
+void spi2_cs(int en);
+void spi2_wr(u32 data);
+u8   spi2_rd(void);
+void spi2_wait(void);
+void spi2_flush(void);
 
 #endif

@@ -16,54 +16,28 @@
 #include "spi.h"
 
 static void spi_init_ios(u32 port);
-static u8   spi1_rd(void);
-static u8   spi2_rd(void);
-static void spi1_wr(u32 data);
-static void spi2_wr(u32 data);
-static void spi1_cs(int en);
-static void spi2_cs(int en);
-static void spi1_wait(void);
-static void spi2_wait(void);
-static void spi1_flush(void);
-static void spi2_flush(void);
-
-s_spi spi_ctrl[2];
 
 void spi_init(void)
 {
-	/* Config SPI1 port */
-	spi_ctrl[0].rd    = spi1_rd;
-	spi_ctrl[0].wr    = spi1_wr;
-	spi_ctrl[0].cs    = spi1_cs;
-	spi_ctrl[0].wait  = spi1_wait;
-	spi_ctrl[0].flush = spi1_flush;
-	/* Config SPI2 port */
-	spi_ctrl[1].rd    = spi2_rd;
-	spi_ctrl[1].wr    = spi2_wr;
-	spi_ctrl[1].cs    = spi2_cs;
-	spi_ctrl[1].wait  = spi2_wait;
-	spi_ctrl[1].flush = spi2_flush;
+	return;
 }
 
-s_spi * spi_open(u32 port)
+void spi_open(u32 port)
 {
 	u32 cr1 = port + SPI_CR1;
-	s_spi *spi;
 	
 	if (port == SPI1)
 	{
 		spi_init_ios(port);
 		reg_set(RCC_APB2ENR, 0x1000); /* Activate SPI1 */
-		spi = &spi_ctrl[0];
 	}
 	else if (port == SPI2)
 	{
 		spi_init_ios(port);
 		reg_set(RCC_APB1ENR, 0x4000); /* Activate SPI2 */
-		spi = &spi_ctrl[1];
 	}
 	else
-		return(0);
+		return;
 	
 	reg_set(cr1, 0x300); /* Set SSM (NSS soft) and SSI */
 	if (port == SPI2)
@@ -71,10 +45,10 @@ s_spi * spi_open(u32 port)
 	else
 		reg_set(cr1,  0x08); /* Set BR=001 (fclk/4) */
 	reg_set(cr1,  0x44); /* Set SPI Enable in master mode */
-	return(spi);
+	return;
 }
 
-static void spi1_cs(int en)
+void spi1_cs(int en)
 {
 	vu32 *nss;
 	
@@ -85,7 +59,7 @@ static void spi1_cs(int en)
 		*nss = 0x00000010; // NSS = 1
 }
 
-static u8 spi1_rd(void)
+u8 spi1_rd(void)
 {
 	u32 value;
 	
@@ -110,7 +84,7 @@ void spi1_wr(u32 data)
 	/* Write the value */
 	*(vu32 *)SPI1_DR = data;
 }
-static void spi1_wait(void)
+void spi1_wait(void)
 {
   	/* Wait until BSY is cleared */
 	while (*(vu32 *)SPI1_SR & 0x80)
@@ -120,7 +94,7 @@ static void spi1_wait(void)
 	while( (u32)*(vu32 *)(GPIOA + 0x08) & 0x20)
 		;
 }
-static void spi1_flush(void)
+void spi1_flush(void)
 {
 	u32 value;
 
@@ -138,7 +112,7 @@ static void spi1_flush(void)
 	return;
 }
 
-static void spi2_cs(int en)
+void spi2_cs(int en)
 {
 	vu32 *nss;
 	
@@ -154,7 +128,7 @@ static void spi2_cs(int en)
 	}
 }
 
-static u8 spi2_rd(void)
+u8 spi2_rd(void)
 {
 	u32 value;
 	
@@ -180,7 +154,7 @@ void spi2_wr(u32 data)
 	*(vu32 *)SPI2_DR = data;
 }
 
-static void spi2_wait(void)
+void spi2_wait(void)
 {
 	/* Wait until BSY is cleared */
 	while (*(vu32 *)SPI2_SR & 0x80)
@@ -190,7 +164,7 @@ static void spi2_wait(void)
 	while( (u32)*(vu32 *)(GPIOB + 0x08) & 0x2000)
 		;
 }
-static void spi2_flush(void)
+void spi2_flush(void)
 {
 	u32 value;
 
