@@ -24,7 +24,7 @@
 static const u8 xid[4] = {0xad, 0xde, 0x12, 0x23};
 static const u8 magic_cookie[4] = {99, 130, 83, 99};
 
-static u8 state;
+static u8 state = 0;
 
 static void dhcp_send_req(dhcp_packet *pkt);
 
@@ -39,12 +39,18 @@ void dhcp_periodic(void)
 		dhcp_req();
 }
 
+int dhcp_status(void)
+{
+	return state;
+}
+
 void dhcp_req(void)
 {
 	int jj;
 	dhcp_packet *pkt;
 	
 	uart_puts("DHCP: REQ...\r\n");
+	state = 1;
 
 	for (jj = 0; jj < 64; jj++)
 		net_tx_buf[jj] = 0;
@@ -101,13 +107,14 @@ void dhcp_rx(ip_hdr *pkt)
 	uart_puts("DHCP: Your IP ");
 	uart_puthex(host_ip); uart_crlf();
 	
-	state = 1;
+	state = 2;
 	
 	if (d->file[0] != 0x00)
 	{
 		tftp_setfile(d->file);
 		tftp_setserver(htonl(d->siaddr));
 		tftp_req();
+		state |= 0x80;
 	}
 }
 /* EOF */

@@ -93,7 +93,6 @@ void ip_arp_in  (void);
 void ip_arp_out (void);
 void ip_arp_rx  (void);
 
-extern u8  host_mac[6];
 extern u32 host_ip;
 extern u8 *net_tx_buf;
 extern int net_tx_len;

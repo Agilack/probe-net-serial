@@ -10,11 +10,11 @@ void ip_arp_init(void)
 {
 	mac_cache[0].ip = 0xffffffff;
 	mac_cache[0].phy[0] = 0xff;
-	mac_cache[1].phy[1] = 0xff;
-	mac_cache[2].phy[2] = 0xff;
-	mac_cache[3].phy[3] = 0xff;
-	mac_cache[4].phy[4] = 0xff;
-	mac_cache[5].phy[5] = 0xff;
+	mac_cache[0].phy[1] = 0xff;
+	mac_cache[0].phy[2] = 0xff;
+	mac_cache[0].phy[3] = 0xff;
+	mac_cache[0].phy[4] = 0xff;
+	mac_cache[0].phy[5] = 0xff;
 	
 	mac_cache[1].ip = 0x00000000;
 	mac_cache[2].ip = 0x00000000;

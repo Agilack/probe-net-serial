@@ -29,12 +29,14 @@ int  eth_init(void);
 int  eth_stack_init(void);
 void eth_interrupt(void);
 void eth_periodic(void);
+int  eth_status(void);
 
 void eth_tx_packet(void);
 
 u32 enc_phy_r(u8 radr);
 
 extern u8 *net_rx_buf;
+extern u8  host_mac[6];
 
 #undef DEBUG_ETH_TX
 #undef DEBUG_ETH_RX

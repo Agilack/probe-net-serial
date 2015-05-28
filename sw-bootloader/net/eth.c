@@ -23,11 +23,12 @@
 
 static void eth_rx_packet(void);
 
-s_eth_status eth_status;
+static s_eth_status status;
 
 static u32 eth_events;
 static u16 enc_rxpnt;
 
+u8  host_mac[6];
 u8 rx_buf0[ETH_FRAME_SIZE];
 u8 *net_rx_buf;
 u8 tx_buf0[ETH_FRAME_SIZE];
@@ -36,19 +37,13 @@ int net_tx_len;
 
 u32 tm_dhcp;
 
-void dhcpc_appcall(void)
-{
-	uart_puts("dhcp_appcall()\r\n");
-}
-
 int eth_init(void)
 {
 	u8 v_lsb, v_msb;
 	int result;
 	
-	eth_status.link   = 0;
-	eth_status.status = 0;
-	eth_status.tx     = 0;
+	status.link   = 0;
+	status.tx     = 0;
 	eth_events  = 0;
 
 	spi_open(SPI2);
@@ -62,9 +57,8 @@ int eth_init(void)
 		return(-1);
 	}
 	
-	hw_setup_irq(8);
+//	hw_setup_irq(8);
 
-uart_puts(".");	
 	/* Configure buffers */
 	enc_bxsel(0);
 	enc_wcr(0x05, 0x06); // ERXSTH
@@ -79,6 +73,15 @@ uart_puts(".");
 
 	enc_wcr(0x19, 0x60); // EUDANDH
 	enc_wcr(0x18, 0x01); // EUDANDL
+	
+	/* Init the local MAC address */
+	enc_bxsel(3);
+	host_mac[0] = enc_rcr(0x04);
+	host_mac[1] = enc_rcr(0x05);
+	host_mac[2] = enc_rcr(0x02);
+	host_mac[3] = enc_rcr(0x03);
+	host_mac[4] = enc_rcr(0x00);
+	host_mac[5] = enc_rcr(0x01);
 	
 	/* Enable interrupts */
 	enc_bxsel(3);
@@ -105,14 +108,6 @@ int eth_stack_init(void)
 	net_rx_buf = rx_buf0;
 	net_tx_buf = tx_buf0;
 	
-	enc_bxsel(3);
-	host_mac[0] = enc_rcr(0x04);
-	host_mac[1] = enc_rcr(0x05);
-	host_mac[2] = enc_rcr(0x02);
-	host_mac[3] = enc_rcr(0x03);
-	host_mac[4] = enc_rcr(0x00);
-	host_mac[5] = enc_rcr(0x01);
-	
 	host_ip = 0;
 	
 	uart_puts("ARP ");
@@ -133,6 +128,15 @@ void eth_periodic(void)
 	
 	enc_bxsel(0);
 	
+	/* Get global status from ESTATH */
+	v = enc_rcr(0x1B);
+	
+	/* Update LINK */
+	if (v & 0x01)
+		status.link = 1;
+	else
+		status.link = 0;
+
 	/* Get Packet Counter from ESTATL */
 	v = enc_rcr(0x1A); 
 	
@@ -153,7 +157,7 @@ void eth_periodic(void)
 	tm_elapsed = tm_current - tm_dhcp;
 	if (tm_elapsed > 25)
 	{
-		if (eth_status.link)
+		if (status.link)
 			dhcp_periodic();
 		else
 			uart_puts("DHCP: cable disconnected :(\r\n");
@@ -161,6 +165,11 @@ void eth_periodic(void)
 	}
 	
 	return;
+}
+
+int eth_status(void)
+{
+	return status.link;
 }
 
 static void eth_rx_packet(void)
@@ -192,7 +201,7 @@ static void eth_rx_packet(void)
 		pkt_valid = 1;
 		/* Read datas */
 		for (ii = 0; ii < pkt_len; ii++)
-			rx_buf0[ii] = enc_rrxdata(1, 0);
+			net_rx_buf[ii] = enc_rrxdata(1, 0);
 	}
 	else
 	{
@@ -263,13 +272,13 @@ void eth_tx_packet(void)
 
 //	uart_puts("eth_tx_packet()\r\n");
 //	dump(net_tx_buf, net_tx_len);
-	if (eth_status.link == 0)
+	if (status.link == 0)
 	{
 		D_ETH_TX("TX ! LINK\r\n");
 		return;
 	}
 	
-	while (eth_status.tx)
+	while (status.tx)
 		uart_putc('.');
 	
 #ifdef DEBUG_ETH_TX
@@ -296,7 +305,7 @@ void eth_tx_packet(void)
 	enc_wcr(0x03, net_tx_len >>   8); // ETXLENH
 	enc_wcr(0x02, net_tx_len & 0xFF); // ETXLENL
 
-	eth_status.tx = 1;
+	status.tx = 1;
 	
 	/* Set TXRTS to start transmit */
 	enc_bfsc(0x1E, 0x02, 1);
@@ -312,7 +321,7 @@ void eth_tx_packet(void)
 		if ((v & 0x02) == 0)
 			break;
 	}
-	eth_status.tx = 0;
+	status.tx = 0;
 #endif
 }
 
@@ -348,7 +357,7 @@ void eth_interrupt(void)
 		enc_bxsel(0);
 		enc_bfsc(0x1C, 0x08, 0);
 		/* Clear TX status flag */
-		eth_status.tx = 0;
+		status.tx = 0;
 	}
 #endif
 	
@@ -363,12 +372,12 @@ void eth_interrupt(void)
 		if (v & 1)
 		{
 			uart_puts("LINK UP\r\n");
-			eth_status.link = 1;
+			status.link = 1;
 		}
 		else
 		{
 			uart_puts("LINK DOWN\r\n");
-			eth_status.link = 0;
+			status.link = 0;
 		}
 		
 		enc_bxsel(3);

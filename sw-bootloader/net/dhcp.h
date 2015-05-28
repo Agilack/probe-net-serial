@@ -40,8 +40,8 @@ struct _dhcp_packet
 typedef struct _dhcp_packet dhcp_packet;
 
 void dhcp_init(void);
+int  dhcp_status(void);
 void dhcp_periodic(void);
-void dhcpc_appcall(void);
 void dhcp_req(void);
 void dhcp_rx(ip_hdr *pkt);
 
