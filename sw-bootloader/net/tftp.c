@@ -5,14 +5,10 @@
 #include "uart.h"
 #include "tftp.h"
 
-char tftp_filename[32];
-static u32 tftp_server;
-static u32 tftp_last_pos;
-
-void tftp_init(void)
-{
-	//
-}
+static char tftp_filename[32];
+static u32  tftp_server;
+static u16  tftp_last_pos;
+static u16  status = 0;
 
 void tftp_setfile(u8 *name)
 {
@@ -30,6 +26,11 @@ void tftp_setserver(u32 ip)
 	uart_crlf();
 }
 
+int tftp_status(void)
+{
+	return status;
+}
+
 void tftp_req(void)
 {
 	tftp_packet *pkt;
@@ -39,7 +40,8 @@ void tftp_req(void)
 	uart_puts("TFTP: REQ...\r\n");
 
 	/* Reset the counter to a non-zero value */
-	tftp_last_pos = 0xFFFFFFFF;
+	tftp_last_pos = 0xFFFF;
+	status   = 0x0001;
 
 	for (i = 0; i < ETH_FRAME_SIZE; i++)
 		net_tx_buf[i] = 0;
@@ -70,8 +72,8 @@ void tftp_rx(void)
 	int i;
 	
 	pkt = (tftp_packet *)net_rx_buf;
-	uart_puts("TFTP: op="); uart_puthex16(htons(pkt->opcode));
-	uart_crlf();
+//	uart_puts("TFTP: op="); uart_puthex16(htons(pkt->opcode));
+//	uart_crlf();
 	
 	if (pkt->opcode == htons(0x03))
 	{
@@ -80,10 +82,11 @@ void tftp_rx(void)
 		d_pkt = (tftp_data *)pkt->data;
 		if (d_pkt->id != tftp_last_pos)
 		{
-			uart_puts("Packet ID "); uart_puthex16(htons(d_pkt->id));
+			uart_puts("TFTP: Data packet "); uart_puthex16(htons(d_pkt->id));
 			addr = (0x08005000 - 512); /* Minus 512 because 1st packet is '1' */
 			addr += htons(d_pkt->id) << 9;
 			uart_puts("  address "); uart_puthex(addr);
+			uart_puts("  len ");     uart_puthex16(htons(pkt->udp.len));
 			uart_crlf();
 			if ((addr & 0x3FF) == 0)
 			{
@@ -91,6 +94,7 @@ void tftp_rx(void)
 				hw_flash_erase(addr);
 			}
 			hw_flash_wr(d_pkt->data, addr, 512);
+			tftp_last_pos = d_pkt->id;
 		}
 		
 		pout = (tftp_packet *)net_tx_buf;
@@ -114,6 +118,11 @@ void tftp_rx(void)
 		for (i = 2; i < 100; i++)
 			pout->data[i] = 0x00;
 		ip_tx(sizeof(eth_hdr) + sizeof(ip_hdr) + sizeof(udp_hdr) + 8);
+		
+		if (htons(pkt->udp.len) != 0x020C)
+		{
+			status = 0x0002;
+		}
 	}
 }
 /* EOF */

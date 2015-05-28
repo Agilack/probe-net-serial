@@ -35,8 +35,6 @@ u8 tx_buf0[ETH_FRAME_SIZE];
 u8 *net_tx_buf;
 int net_tx_len;
 
-u32 tm_dhcp;
-
 int eth_init(void)
 {
 	u8 v_lsb, v_msb;
@@ -115,16 +113,12 @@ int eth_stack_init(void)
 	uart_puts("DHCP ");
 	dhcp_init();
 	
-	tm_dhcp = get_time();
-
 	return(0);
 }
 
 void eth_periodic(void)
 {
 	u8  v;
-	u32 tm_current;
-	u32 tm_elapsed;
 	
 	enc_bxsel(0);
 	
@@ -150,18 +144,6 @@ void eth_periodic(void)
 		//enc_bxsel(3);
 		// Clear the PKTIF bit
 		//enc_bfsc(0x1C, 0x40, 0);
-	}
-	
-	tm_current = get_time();
-	
-	tm_elapsed = tm_current - tm_dhcp;
-	if (tm_elapsed > 25)
-	{
-		if (status.link)
-			dhcp_periodic();
-		else
-			uart_puts("DHCP: cable disconnected :(\r\n");
-		tm_dhcp = tm_current;
 	}
 	
 	return;

@@ -45,6 +45,7 @@ typedef struct _tftp_data tftp_data;
 
 void tftp_setfile(u8 *name);
 void tftp_setserver(u32 ip);
+int  tftp_status(void);
 void tftp_req(void);
 void tftp_rx (void);
 #endif

@@ -113,7 +113,7 @@ void dhcp_rx(ip_hdr *pkt)
 	{
 		tftp_setfile(d->file);
 		tftp_setserver(htonl(d->siaddr));
-		tftp_req();
+		//tftp_req();
 		state |= 0x80;
 	}
 }

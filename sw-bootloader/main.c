@@ -16,12 +16,15 @@
 #include "spi.h"
 #include "uart.h"
 #include "eth.h"
+#include "dhcp.h"
+#include "tftp.h"
 
 void __MSR_MSP(u32 v);
 static void boot_normal(void);
 
 int main(void)
 {
+	u32 tm_dhcp;
 	u32 tm_notify;
 	u32 key;
 	int i;
@@ -50,8 +53,6 @@ int main(void)
 	
 	uart_puts(" * Start bootloader mode...\r\n");
 
-	tm_notify    = 0;
-
 	hw_flash_unlock();
 	spi_init();
 	uart_puts("  - Init Ethernet: ");
@@ -64,11 +65,22 @@ int main(void)
 
 	hw_tim2_init();
 	
-	tm_notify   = get_time();
+	tm_notify = get_time();
+	tm_dhcp   = get_time();
 
 	while(1)
 	{
 		eth_periodic();
+		
+		if (get_time() > (tm_dhcp + 80))
+		{
+			if ( eth_status() )
+				dhcp_periodic();
+			else
+				uart_puts("DHCP: cable disconnected :(\r\n");
+			
+			tm_dhcp = get_time();
+		}
 		
 		if ( (get_time() > (tm_notify + 1000)) )
 		{
@@ -76,6 +88,11 @@ int main(void)
 			uart_puts("["); uart_puthex(tm_notify);
 			uart_puts("] Wait for events... \r");
 			
+		}
+		
+		if ((tftp_status() == 0) && (dhcp_status() & 0x80))
+		{
+			tftp_req();
 		}
 	}
 }
