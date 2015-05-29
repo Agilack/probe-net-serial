@@ -13,13 +13,13 @@
  */
 #include "hardware.h"
 #include "main.h"
+#include "time.h"
 #include "spi.h"
 #include "uart.h"
 #include "eth.h"
 #include "dhcp.h"
 #include "tftp.h"
 
-void __MSR_MSP(u32 v);
 static void boot_normal(void);
 
 int main(void)
@@ -52,6 +52,7 @@ int main(void)
 		boot_normal();
 	
 	uart_puts(" * Start bootloader mode...\r\n");
+	time_init();
 
 	hw_flash_unlock();
 	spi_init();
@@ -63,8 +64,6 @@ int main(void)
 	eth_stack_init();
 	uart_puts("ok\r\n");
 
-	hw_tim2_init();
-	
 	tm_notify = get_time();
 	tm_dhcp   = get_time();
 
@@ -94,6 +93,13 @@ int main(void)
 		{
 			tftp_req();
 		}
+		
+		if (tftp_status() == 0x02)
+		{
+			uart_puts("MAIN: TFTP has finished\r\n");
+			time_unload();
+			boot_normal();
+		}
 	}
 }
 
@@ -102,10 +108,29 @@ static void boot_normal(void)
 	void (*fpnt)(void);
 	u32 ad;
 	
-	uart_puts(" * Start main firmware...\r\n");
+#ifdef DBG_DUMP_STACK	
+	for (ad = 0x20004C00; ad < 0x20005000; ad++)
+	{
+		if ((ad % 16) == 0)
+		{
+			uart_crlf();
+			uart_puthex(ad); uart_putc(' ');
+		}
+		uart_puthex8(*(u8 *)ad);
+		uart_putc(' ');
+	}
+	uart_crlf();
+#endif
+	
+	uart_puts(" * Start main firmware... ");
 	
 	/* Get the address of the Reset vector */
 	ad = *(u32 *)0x08005004;
+	if ( (ad == 0xFFFFFFFF) || (ad == 0x00000000) )
+	{
+		uart_puts("\r\n * Bad entry address. STOP\r\n");
+		while(1);
+	}
 	fpnt = (void (*)(void))ad;
 	uart_puthex(ad); uart_crlf();
 	
@@ -114,8 +139,9 @@ static void boot_normal(void)
 	/* Fix UART speed */
 	reg_wr(UART_BRR, 0x0120);
 	
-	/* Update MSP */
-	__MSR_MSP(*(vu32 *)0x08005000);
+	/* Update VTOR (Vector Table Offset Register) */
+	*(u32 *)(M3_SCB + 0x08) = 0x08005000;
+	
 	/* Call it ...*/
 	fpnt();
 	
@@ -195,12 +221,6 @@ void dump (u8* adr, int len)
 		}
 		uart_crlf();
 	}
-}
-
-extern u32 glb_tim2;
-u32 get_time(void)
-{
-	return glb_tim2;
 }
 
 void EXTI9_5_IRQHandler(void)

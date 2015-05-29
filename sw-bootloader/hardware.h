@@ -14,17 +14,19 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
-#define TIM2  ((u32)0x40000000)
-#define SPI2  ((u32)0x40003800)
-#define AFIO  ((u32)0x40010000)
-#define EXTI  ((u32)0x40010400)
-#define GPIOA ((u32)0x40010800)
-#define GPIOB ((u32)0x40010C00)
-#define GPIOC ((u32)0x40011000)
-#define SPI1  ((u32)0x40013000)
-#define UART1 ((u32)0x40013800)
-#define RCC   ((u32)0x40021000)
-#define FLASH ((u32)0x40022000)
+#define TIM2   ((u32)0x40000000)
+#define SPI2   ((u32)0x40003800)
+#define AFIO   ((u32)0x40010000)
+#define EXTI   ((u32)0x40010400)
+#define GPIOA  ((u32)0x40010800)
+#define GPIOB  ((u32)0x40010C00)
+#define GPIOC  ((u32)0x40011000)
+#define SPI1   ((u32)0x40013000)
+#define UART1  ((u32)0x40013800)
+#define RCC    ((u32)0x40021000)
+#define FLASH  ((u32)0x40022000)
+#define SYSTICK ((u32)0xE000E010)
+#define M3_SCB ((u32)0xE000ED00)
 
 #define RCC_CR      RCC
 #define RCC_CFGR    (RCC + 0x04)
@@ -77,9 +79,12 @@
 #define TIM2_DIER  (TIM2 + 0x0C)
 #define TIM2_SR    (TIM2 + 0x10)
 #define TIM2_EGR   (TIM2 + 0x14)
+#define TIM2_CCMR1 (TIM2 + 0x18)
+#define TIM2_CCER  (TIM2 + 0x20)
 #define TIM2_CNT   (TIM2 + 0x24)
 #define TIM2_PSC   (TIM2 + 0x28)
 #define TIM2_ARR   (TIM2 + 0x2C)
+#define TIM2_CCR1  (TIM2 + 0x34)
 
 #define FLASH_ACR     (FLASH + 0x00)
 #define FLASH_KEYR    (FLASH + 0x04)
@@ -90,6 +95,11 @@
 #define FLASH_OBR     (FLASH + 0x1C)
 #define FLASH_WRPR    (FLASH + 0x20)
 
+#define SYSTICK_CTRL  SYSTICK
+#define SYSTICK_LOAD (SYSTICK + 0x04)
+#define SYSTICK_CUR  (SYSTICK + 0x08)
+#define SYSTICK_CAL  (SYSTICK + 0x0C)
+
 typedef unsigned long  u32;
 typedef unsigned short u16;
 typedef unsigned char  u8;
@@ -99,7 +109,6 @@ typedef volatile unsigned short vu16;
 void hw_init(void);
 void hw_setup_clock(void);
 void hw_setup_irq(int n);
-void hw_tim2_init(void);
 
 /* Low level register functions */
 void reg_wr (u32 reg, u32 value);

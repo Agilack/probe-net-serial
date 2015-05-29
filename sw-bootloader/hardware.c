@@ -157,37 +157,6 @@ void hw_flash_wr(u8 *data, u32 addr, int len)
 	}
 }
 
-u32 glb_tim2;
-
-/**
- * 
- * 
- */
-void hw_tim2_init(void)
-{
-	glb_tim2 = 0;
-	
-	reg_set(RCC_APB1ENR, 0x01); /* Activate Timer2 */
-	/* Configure Timer2 */
-	reg_wr (TIM2_CR1, 0x0200); /* Input clock divided by 4 */
-	reg_wr (TIM2_ARR, 0x3680); /* Value used when reloaded */
-	reg_wr (TIM2_PSC,   0x80); /* Prescaler       */
-	reg_set(TIM2_DIER,  0x01); /* Set UIE bit     */
-	/* NVIC: Enable interrupt 28 (TIM2) */
-	reg_wr(0xE000E100, (1 << 28));
-	/* Activate Timer2 (CEN=1) */
-	reg_set(TIM2_CR1,     1);
-}
-
-void TIM2_IRQHandler(void)
-{
-	/* Increment counter */
-	glb_tim2++;
-	
-	/* Clear event */
-	reg_clr(TIM2_SR, 1);
-}
-
 void Global_Handler(u8 n);
 void NMI_Handler(void)        { Global_Handler('C'); }
 void HardFault_Handler(void)  { Global_Handler('D'); }

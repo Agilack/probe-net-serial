@@ -12,10 +12,12 @@ TARGET = $(BUILDDIR)/bootloader
 # Define programs and commands.
 CC = $(CROSS)-gcc
 OBJCOPY = $(CROSS)-objcopy
+OBJDUMP = $(CROSS)-objdump
 
 ASFLAGS = -mcpu=cortex-m3 $(THUMB_IW) -I. -x assembler-with-cpp
 
-CFLAGS = -mcpu=cortex-m3 $(THUMB_IW) -I. -g -O0
+CFLAGS = -mcpu=cortex-m3 $(THUMB_IW) -I.
+#CFLAGS+= -g -O0
 CFLAGS += -ffunction-sections -fdata-sections
 CFLAGS += -Wall -Wimplicit -Wcast-align -Wpointer-arith -Wswitch
 CFLAGS += -Wredundant-decls -Wreturn-type -Wshadow -Wunused
@@ -26,7 +28,8 @@ LDFLAGS += -lc -lgcc -Tbootloader.ld
 
 ASRC = start.s cortexm3_macro.s
 
-SRC = main.c hardware.c spi.c uart.c net/eth.c net/eth_drv_enc.c \
+SRC = main.c hardware.c time.c spi.c uart.c \
+      net/eth.c net/eth_drv_enc.c \
       net/ip.c net/ip_arp.c net/dhcp.c net/tftp.c
 
 # Define all object files.
@@ -36,10 +39,11 @@ COBJ = $(patsubst %, $(BUILDDIR)/%,$(_COBJ))
 AOBJ = $(patsubst %, $(BUILDDIR)/%,$(_AOBJ))
 
 # go!
-all: env elf bin
+all: env elf bin dis
 
 bin: $(TARGET).bin
 elf: $(TARGET).elf
+dis: $(TARGET).dis
 
 env:
 	@echo " [MD] $(BUILDDIR)"
@@ -47,16 +51,15 @@ env:
 	@echo " [MD] $(BUILDDIR)/net"
 	@mkdir -p $(BUILDDIR)/net
 
-# Create final output file (.hex) from ELF output file.
-%.hex: %.elf
-	@echo
-	$(OBJCOPY) -O binary $< $@
+# Create a dump information from binary (disassemble)
+%.dis: %.elf
+	@echo " [OD] $@"
+	@$(OBJDUMP) -D $< > $@
 
 # Create final output file (.bin) from ELF output file.
 %.bin: %.elf
 	@echo " [OC] $@"
 	@$(OBJCOPY) -O binary $< $@
-
 
 %.elf:  $(COBJ) $(AOBJ)
 	@echo " [LD] $@"

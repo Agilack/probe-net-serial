@@ -32,12 +32,12 @@ _Minimum_Stack_Size = 0x200 ;
 
 MEMORY
 {
-  RAM (xrw)     : ORIGIN = 0x20000000, LENGTH = 10K
+  RAM (xrw)     : ORIGIN = 0x20004400, LENGTH =  3K
   FLASH (rx)    : ORIGIN = 0x08000000, LENGTH = 20K
 }
 
 /* higher address of the user mode stack */
-_estack = 0x20002800;
+_estack = 0x20005000;
 
 SECTIONS
 {
