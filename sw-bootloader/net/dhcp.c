@@ -65,7 +65,7 @@ void dhcp_req(void)
 	pkt->udp.destport= htons(67);
 	pkt->udp.len = htons( sizeof(dhcp_packet) - sizeof(eth_hdr) - sizeof(ip_hdr) );
 	dhcp_send_req(pkt);
-	ip_tx(sizeof(dhcp_packet));
+	ip_tx(sizeof(dhcp_packet) - sizeof(eth_hdr));
 }
 
 static void dhcp_send_req(dhcp_packet *pkt)

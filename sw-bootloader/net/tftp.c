@@ -62,7 +62,7 @@ void tftp_req(void)
 	pnt += strlen(tftp_filename) + 1;
 	strcpy((char *)pnt, (char *)"octet");
 
-	ip_tx(sizeof(tftp_packet));
+	ip_tx(sizeof(tftp_packet) - sizeof(eth_hdr));
 }
 
 void tftp_rx(void)
@@ -117,7 +117,7 @@ void tftp_rx(void)
 		pout->data[1] = pkt->data[1];
 		for (i = 2; i < 100; i++)
 			pout->data[i] = 0x00;
-		ip_tx(sizeof(eth_hdr) + sizeof(ip_hdr) + sizeof(udp_hdr) + 8);
+		ip_tx(sizeof(ip_hdr) + sizeof(udp_hdr) + 8);
 		
 		if (htons(pkt->udp.len) != 0x020C)
 		{

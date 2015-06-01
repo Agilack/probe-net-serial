@@ -119,6 +119,31 @@ Api_Handler:
 	.word	uart_putc
 	.word	uart_puts
 	.word	uart_puthex
+	/* SPI functions */
+	.word	spi_open
+	.word	spi1_cs
+	.word	spi1_wr
+	.word	spi1_rd
+	.word	spi1_flush
+	.word	spi1_wait
+	/* Ethernet functions */
+	.word   eth_init
+	.word   eth_periodic
+	.word	eth_status
+	.word   eth_set_rx
+	.word   eth_set_tx
+	.word   eth_set_callback
+	.word	eth_stack_init
+	/* IP functions */
+	.word	ip_tx
+	.word	ip_prepare
+	.word	ip_proto_register
+	.word	ip_cksum
+	.word	htons
+	.word	htonl
+	/* Net: DHCP functions */
+	.word	dhcp_periodic
+	.word	dhcp_status
 
 /**
  * @brief  This is the code that gets called when the processor receives an

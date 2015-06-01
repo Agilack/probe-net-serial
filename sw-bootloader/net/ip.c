@@ -45,6 +45,8 @@ void ip_prepare(ip_hdr *pkt)
 	pkt->vhl = 0x45;
 	pkt->tos = 0x00;
 	pkt->ttl = 0x40;
+	pkt->ipoffset[0] = 0;
+	pkt->ipoffset[1] = 0;
 	pkt->srcipaddr = htonl(host_ip);
 }
 
@@ -56,6 +58,7 @@ void ip_tx(int len)
 	
 	dgram = (ip_hdr *)(net_tx_buf + sizeof(eth_hdr));
 	
+	dgram->len   = htons(len);
 	dgram->cksum = 0;
 	sum = ip_cksum(0, (u8 *)dgram, 20);
 	dgram->cksum = htons(~sum);
@@ -64,7 +67,7 @@ void ip_tx(int len)
 	frame->type = htons(0x800);
 	ip_arp_out();
 	
-	net_tx_len = len;
+	net_tx_len = (len + sizeof(eth_hdr));
 	eth_tx_packet();
 }
 
@@ -87,12 +90,13 @@ u16 ip_cksum(u32 sum, const u8 *data, u16 len)
 		dataptr += 2;
 	}
 	
-//	{
-//		t = (dataptr[0] << 8) + 0;
-//		sum += t;
+	if (len & 1)
+	{
+		t = (dataptr[0] << 8) + 0;
+		sum += t;
 //		if(sum < t)
 //			sum++; /* carry */
-//      }
+      }
 
 	while (sum & 0xffff0000)
 	{
@@ -107,13 +111,6 @@ u16 ip_cksum(u32 sum, const u8 *data, u16 len)
 
 void ip_mac(eth_hdr *frame, mac_entry *mac)
 {
-//	frame->mac_s[0] = host_mac[0];
-//	frame->mac_s[1] = host_mac[1];
-//	frame->mac_s[2] = host_mac[2];
-//	frame->mac_s[3] = host_mac[3];
-//	frame->mac_s[4] = host_mac[4];
-//	frame->mac_s[5] = host_mac[5];
-
 	if (mac)
 	{
 		frame->mac_d[0] = mac->phy[0];
@@ -176,7 +173,6 @@ void udp_rx(ip_hdr *datagram)
 		tftp_rx();
 	}
 }
-
 
 u16 htons(u16 n)
 {
