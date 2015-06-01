@@ -29,6 +29,9 @@ int  eth_init(void);
 int  eth_stack_init(void);
 void eth_interrupt(void);
 void eth_periodic(void);
+void eth_set_rx(u8 *addr);
+void eth_set_tx(u8 *addr);
+void eth_set_callback(u32 addr);
 int  eth_status(void);
 
 void eth_tx_packet(void);

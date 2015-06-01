@@ -21,7 +21,9 @@
 #include "ip.h"
 #include "dhcp.h"
 
-static void eth_rx_packet(void);
+static void eth_rx(void);
+static void eth_rx_packet(eth_hdr *frame);
+static void (*eth_rx_data)(eth_hdr *data);
 
 static s_eth_status status;
 
@@ -29,9 +31,7 @@ static u32 eth_events;
 static u16 enc_rxpnt;
 
 u8  host_mac[6];
-u8 rx_buf0[ETH_FRAME_SIZE];
 u8 *net_rx_buf;
-u8 tx_buf0[ETH_FRAME_SIZE];
 u8 *net_tx_buf;
 int net_tx_len;
 
@@ -40,6 +40,7 @@ int eth_init(void)
 	u8 v_lsb, v_msb;
 	int result;
 	
+	eth_rx_data   = eth_rx_packet;
 	status.link   = 0;
 	status.tx     = 0;
 	eth_events  = 0;
@@ -103,13 +104,13 @@ int eth_init(void)
 
 int eth_stack_init(void)
 {
-	net_rx_buf = rx_buf0;
-	net_tx_buf = tx_buf0;
-	
 	host_ip = 0;
+	
+	ip_proto_register(17, (u32)udp_rx);
 	
 	uart_puts("ARP ");
 	ip_arp_init();
+	
 	uart_puts("DHCP ");
 	dhcp_init();
 	
@@ -138,7 +139,7 @@ void eth_periodic(void)
 	{
 		eth_events &= ~1;
 		
-		eth_rx_packet();
+		eth_rx();
 		enc_bxsel(3);
 
 		//enc_bxsel(3);
@@ -149,12 +150,27 @@ void eth_periodic(void)
 	return;
 }
 
+void eth_set_rx(u8 *addr)
+{
+	net_rx_buf = addr;
+}
+
+void eth_set_tx(u8 *addr)
+{
+	net_tx_buf = addr;
+}
+
+void eth_set_callback(u32 addr)
+{
+	eth_rx_data = (void(*)())addr;
+}
+
 int eth_status(void)
 {
 	return status.link;
 }
 
-static void eth_rx_packet(void)
+static void eth_rx(void)
 {
 	u8  enc_rx_head[6];
 	u16 adr_lsb, adr_msb;
@@ -204,41 +220,44 @@ static void eth_rx_packet(void)
 
 	if (pkt_valid == 1)
 	{
-		eth_hdr *frame;
-		frame = (eth_hdr *)net_rx_buf;
-		if (frame->type == htons(0x0800))
-		{
-			D_ETH_RX("IP");
-			ip_rx();
-		}
-		else if (frame->type == htons(0x0806))
-		{
-			D_ETH_RX("ARP\r\n");
-			ip_arp_rx();
-		}
-/*		else
-		{
-			int j = 0;
-			D_ETH_RX("Unknown ");
-			uart_puthex(pkt_len);
-			uart_crlf();
-			while (j < pkt_len)
-			{
-				uart_puthex(j);
-				uart_puts(": ");
-				for (ii = 0; ii < 16; ii++, j++)
-				{
-					uart_puthex8(rx_buf0[j]);
-					uart_putc(' ');
-					if (j == pkt_len)
-					  break;
-				}
-				uart_crlf();
-			}
-		}
-*/
+		eth_rx_data((eth_hdr *)net_rx_buf);
 	}
 	D_ETH_RX("\r\n");
+}
+
+static void eth_rx_packet(eth_hdr *frame)
+{
+	if (frame->type == htons(0x0800))
+	{
+		D_ETH_RX("IP");
+		ip_rx();
+	}
+	else if (frame->type == htons(0x0806))
+	{
+		D_ETH_RX("ARP\r\n");
+		ip_arp_rx();
+	}
+/*	else
+	{
+		int j = 0;
+		D_ETH_RX("Unknown ");
+		uart_puthex(pkt_len);
+		uart_crlf();
+		while (j < pkt_len)
+		{
+			uart_puthex(j);
+			uart_puts(": ");
+			for (ii = 0; ii < 16; ii++, j++)
+			{
+				uart_puthex8(net_rx_buf[j]);
+				uart_putc(' ');
+				if (j == pkt_len)
+				  break;
+			}
+			uart_crlf();
+		}
+	}
+*/
 }
 
 void eth_tx_packet(void)

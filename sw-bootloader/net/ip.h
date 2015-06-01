@@ -80,6 +80,13 @@ struct _mac_entry
 
 typedef struct _mac_entry mac_entry;
 
+struct _ip_proto
+{
+	u8 proto;
+	void (*cb)(ip_hdr *datagram);
+};
+
+typedef struct _ip_proto ip_proto;
 void ip_mac(eth_hdr *frame, mac_entry *mac);
 void ip_prepare(ip_hdr *ip);
 u16  ip_cksum(u32 sum, const u8 *data, u16 len);
@@ -87,6 +94,9 @@ void ip_rx(void);
 void ip_tx(int len);
 u16  htons(u16 n);
 u32  htonl(u32 n);
+
+void ip_proto_register(u8 proto, u32 fct);
+void udp_rx(ip_hdr *datagram);
 
 void ip_arp_init(void);
 void ip_arp_in  (void);

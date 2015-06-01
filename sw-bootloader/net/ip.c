@@ -19,8 +19,26 @@
 #include "dhcp.h"
 #include "tftp.h"
 
-u8  host_mac[6];
 u32 host_ip;
+
+#define NB_PROTO 3
+ip_proto prot[NB_PROTO];
+
+void ip_proto_register(u8 proto, u32 fct)
+{
+	int i;
+	
+	for (i = 0; i < NB_PROTO; i++)
+	{
+		if ((prot[i].proto == proto) ||
+		    (prot[i].proto == 0) )
+		{
+			prot[i].proto = proto;
+			prot[i].cb    = (void(*)())fct;
+			break;
+		}
+	}
+}
 
 void ip_prepare(ip_hdr *pkt)
 {
@@ -119,34 +137,46 @@ void ip_mac(eth_hdr *frame, mac_entry *mac)
 void ip_rx(void)
 {
 	ip_hdr  *pkt_ip;
+	int i;
 	
 	pkt_ip  = (ip_hdr *) ( net_rx_buf   + sizeof(eth_hdr) );
 	
 	ip_arp_in();
 	
-	if (pkt_ip->proto == 17)
+	for (i = 0; i < NB_PROTO; i++)
 	{
-		udp_hdr *pkt_udp;
-		D_IP_RX(" UDP");
-		pkt_udp = (udp_hdr *)( (u8 *)pkt_ip + sizeof(ip_hdr) );
-		
-		if (pkt_udp->destport == htons(0x44))
+		if (prot[i].proto == pkt_ip->proto)
 		{
-			D_IP_RX(" DHCP\r\n");
-			dhcp_rx(pkt_ip);
-		}
-		else if (pkt_udp->destport == htons(TFTP_PORT))
-		{
-			D_IP_RX(" TFTP\r\n");
-			tftp_rx();
+			prot[i].cb(pkt_ip);
+			break;
 		}
 	}
-	else
+	
+	if (i == NB_PROTO)
 	{
 		uart_puts("  -> Unknown proto\r\n");
 		dump((u8*)pkt_ip,  48);
 	}
 }
+
+void udp_rx(ip_hdr *datagram)
+{
+	udp_hdr *pkt_udp;
+	D_IP_RX(" UDP");
+	pkt_udp = (udp_hdr *)( (u8 *)datagram + sizeof(ip_hdr) );
+
+	if (pkt_udp->destport == htons(0x44))
+	{
+		D_IP_RX(" DHCP\r\n");
+		dhcp_rx(datagram);
+	}
+	else if (pkt_udp->destport == htons(TFTP_PORT))
+	{
+		D_IP_RX(" TFTP\r\n");
+		tftp_rx();
+	}
+}
+
 
 u16 htons(u16 n)
 {

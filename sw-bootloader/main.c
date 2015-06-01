@@ -61,6 +61,8 @@ int main(void)
 	uart_puts("ok\r\n");
 
 	uart_puts("  - Init stack: ");
+	eth_set_rx((u8 *)0x20004000);
+	eth_set_tx((u8 *)0x20004600);
 	eth_stack_init();
 	uart_puts("ok\r\n");
 
