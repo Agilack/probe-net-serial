@@ -16,6 +16,8 @@
 
 #include "hardware.h"
 
+#define USE_DMA 1
+
 #define BAUD_1200   0x6C00
 #define BAUD_2400   0x3600
 #define BAUD_4800   0x1B00
@@ -37,12 +39,14 @@ void uart_crlf    (void);
 void uart2_config(u16 speed);
 void uart2_putc(u8 c);
 void uart2_puts(char *s);
+void uart2_putm(char *s, int len);
 inline int uart2_isready(void);
 inline int uart2_rd(void);
 
 void uart3_config(u16 speed);
 void uart3_putc(u8 c);
 void uart3_puts(char *s);
+void uart3_putm(char *s, int len);
 inline int uart3_isready(void);
 inline int uart3_rd(void);
 

@@ -25,6 +25,7 @@
 #define GPIOC ((u32)0x40011000)
 #define SPI1  ((u32)0x40013000)
 #define UART1 ((u32)0x40013800)
+#define DMA   ((u32)0x40020000)
 #define RCC   ((u32)0x40021000)
 #define FLASH ((u32)0x40022000)
 #define SYSTICK ((u32)0xE000E010)
@@ -86,6 +87,43 @@
 #define TIM2_CNT   (TIM2 + 0x24)
 #define TIM2_PSC   (TIM2 + 0x28)
 #define TIM2_ARR   (TIM2 + 0x2C)
+
+#define DMA_ISR    (DMA + 0x00)
+#define DMA_IFCR   (DMA + 0x04)
+#define DMA_CCR1   (DMA + 0x08)
+#define DMA_CNDTR1 (DMA + 0x0C)
+#define DMA_CPAR1  (DMA + 0x10)
+#define DMA_CMAR1  (DMA + 0x14)
+/* Channel 2 : UART3 TX */
+#define DMA_CCR2   (DMA + 0x1C)
+#define DMA_CNDTR2 (DMA + 0x20)
+#define DMA_CPAR2  (DMA + 0x24)
+#define DMA_CMAR2  (DMA + 0x28)
+/* Channel 3 : UART3 RX */
+#define DMA_CCR3   (DMA + 0x30)
+#define DMA_CNDTR3 (DMA + 0x34)
+#define DMA_CPAR3  (DMA + 0x38)
+#define DMA_CMAR3  (DMA + 0x3C)
+/* Channel 4 : UART1 TX */
+#define DMA_CCR4   (DMA + 0x44)
+#define DMA_CNDTR4 (DMA + 0x48)
+#define DMA_CPAR4  (DMA + 0x4C)
+#define DMA_CMAR4  (DMA + 0x50)
+/* Channel 5 : UART1 RX */
+#define DMA_CCR5   (DMA + 0x58)
+#define DMA_CNDTR5 (DMA + 0x5C)
+#define DMA_CPAR5  (DMA + 0x60)
+#define DMA_CMAR5  (DMA + 0x64)
+/* Channel 6 : UART2 RX */
+#define DMA_CCR6   (DMA + 0x6C)
+#define DMA_CNDTR6 (DMA + 0x70)
+#define DMA_CPAR6  (DMA + 0x74)
+#define DMA_CMAR6  (DMA + 0x78)
+/* Channel 7 : UART2 TX */
+#define DMA_CCR7   (DMA + 0x80)
+#define DMA_CNDTR7 (DMA + 0x84)
+#define DMA_CPAR7  (DMA + 0x88)
+#define DMA_CMAR7  (DMA + 0x8C)
 
 #define FLASH_ACR     (FLASH + 0x00)
 #define FLASH_KEYR    (FLASH + 0x04)
