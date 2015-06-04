@@ -111,17 +111,15 @@ u8 enc_rcru(u8 radr)
 }
 
 
-void enc_wcr(u8 radr, u8 rval)
+void enc_wcr(u8 radr, u32 rval, int count)
 {
 	e_spi_cs(1);
 	if (radr & 0x80)
 	{
 		/* Write the unbanked write command (WCRU) */
 		e_spi_wr(0x22);
-		e_spi_flush();
 		/* Write the register address */
-		e_spi_wr(radr);
-		e_spi_flush();
+		e_spi_wr(radr & 0x7F);
 	}
 	else
 	{
@@ -130,8 +128,19 @@ void enc_wcr(u8 radr, u8 rval)
 		/* Wait until BSY is cleared */
 		e_spi_wait();
 	}
-	/* Write the value */
-	e_spi_wr( rval );
+	if (count)
+	{
+		u8 *b = (u8 *)rval;
+		while (count)
+		{
+			e_spi_wr( *b );
+			b++;
+			count --;
+		}
+	}
+	else
+		/* Write the value */
+		e_spi_wr( rval );
 	e_spi_wait();
 	
 	/* Read the last input byte to flush RX */
@@ -259,8 +268,8 @@ int enc_reset(void)
 	enc_bxsel(0);
 	
 	// 1) Write arbitrate value to EUDAST
-	enc_wcr(0x16, 0x34);
-	enc_wcr(0x17, 0x12);
+	enc_wcr(0x16, 0x34, 0);
+	enc_wcr(0x17, 0x12, 0);
 	
 	// 2) Read back EUDAST, and verify value
 	value  = (enc_rcr(0x17) << 8);
@@ -280,7 +289,7 @@ int enc_reset(void)
 
 	// 4) Soft-reset sequence
 	enc_bxsel(3);
-	enc_wcr(0x0E, 0x10);
+	enc_wcr(0x0E, 0x10, 0);
 
 	// 5) Wait at least 25us
 //	for (value = 0; value < 0x80000; value++)

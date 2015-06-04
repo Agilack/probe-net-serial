@@ -22,7 +22,7 @@ void enc_sbi  (u32 cmd);
 void enc_bfsc (u8 adr, u8 mask, u8 set);
 u8   enc_rcr(u8 radr);
 u8   enc_rcru(u8 radr);
-void enc_wcr(u8 radr, u8 rval);
+void enc_wcr(u8 radr, u32 rval, int count);
 u32  enc_r_pt(u8 id);
 void enc_w_pt(u8 id, u32 addr);
 u32  enc_rrxrdpt(void);

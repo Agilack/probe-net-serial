@@ -39,9 +39,9 @@ void spi_open(u32 port)
 	else
 		return;
 	
-	reg_set(cr1, 0x300); /* Set SSM (NSS soft) and SSI */
+	reg_wr(cr1, 0x300); /* Set SSM (NSS soft) and SSI */
 	if (port == SPI2)
-		reg_set(cr1,  0x08); /* Set BR=001 (fclk/4) */
+		reg_set(cr1,  0x00); /* Set BR=001 (fclk/2) */
 	else
 		reg_set(cr1,  0x08); /* Set BR=001 (fclk/4) */
 	reg_set(cr1,  0x44); /* Set SPI Enable in master mode */

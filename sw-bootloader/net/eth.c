@@ -60,18 +60,18 @@ int eth_init(void)
 
 	/* Configure buffers */
 	enc_bxsel(0);
-	enc_wcr(0x05, 0x06); // ERXSTH
-	enc_wcr(0x04, 0x00); // ERXSTL
+	enc_wcr(0x05, 0x06, 0); // ERXSTH
+	enc_wcr(0x04, 0x00, 0); // ERXSTL
 	enc_rxpnt = 0x0600;
 	
-	enc_wcr(0x07, 0x5F); // ERXTAILH
-	enc_wcr(0x06, 0xFE); // ERXTAILL
+	enc_wcr(0x07, 0x5F, 0); // ERXTAILH
+	enc_wcr(0x06, 0xFE, 0); // ERXTAILL
 
-	enc_wcr(0x17, 0x60); // EUDASTH
-	enc_wcr(0x16, 0x00); // EUDASTL
+	enc_wcr(0x17, 0x60, 0); // EUDASTH
+	enc_wcr(0x16, 0x00, 0); // EUDASTL
 
-	enc_wcr(0x19, 0x60); // EUDANDH
-	enc_wcr(0x18, 0x01); // EUDANDL
+	enc_wcr(0x19, 0x60, 0); // EUDANDH
+	enc_wcr(0x18, 0x01, 0); // EUDANDL
 	
 	/* Init the local MAC address */
 	enc_bxsel(3);
@@ -92,8 +92,8 @@ int eth_init(void)
 #ifdef ETH_IT_RX
 	v_lsb |= 0x40;
 #endif
-	enc_wcr(0x12, v_lsb); // EIEL
-	enc_wcr(0x13, v_msb); // EIEH
+	enc_wcr(0x12, v_lsb, 0); // EIEL
+	enc_wcr(0x13, v_msb, 0); // EIEH
 	//enc_sbi(0xEC); // SETEIE
 	
 	// Enable RX packet reception
@@ -141,11 +141,23 @@ void eth_periodic(void)
 		
 		eth_rx();
 		enc_bxsel(3);
-
-		//enc_bxsel(3);
-		// Clear the PKTIF bit
-		//enc_bfsc(0x1C, 0x40, 0);
 	}
+	
+#ifndef ETH_IT_TX
+	if(status.tx)
+	{
+		enc_bxsel(3);
+		/* Read back ECON1 to get TXRTS value */
+		v = enc_rcr(0x1E);
+		/* If TXRTS is cleared, transmit is finished */
+		if ((v & 0x02) == 0)
+		{
+			// Clear the TXIF bit
+			enc_bfsc(0x1C, 0x08, 0);
+			status.tx = 0;
+		}
+	}
+#endif
 	
 	return;
 }
@@ -157,7 +169,17 @@ void eth_set_rx(u8 *addr)
 
 void eth_set_tx(u8 *addr)
 {
+	eth_hdr *frame;
+	
 	net_tx_buf = addr;
+	
+	frame = (eth_hdr *)addr;
+	frame->mac_s[0] = host_mac[0];
+	frame->mac_s[1] = host_mac[1];
+	frame->mac_s[2] = host_mac[2];
+	frame->mac_s[3] = host_mac[3];
+	frame->mac_s[4] = host_mac[4];
+	frame->mac_s[5] = host_mac[5];
 }
 
 void eth_set_callback(u32 addr)
@@ -215,8 +237,8 @@ static void eth_rx(void)
 	if (enc_rxpnt == 0x600)
 		adr_tail = 0x5FFE;
 	/* Update the RX tail register */
-	enc_wcr(0x06, adr_tail &  0xFF); // ERXTAILL
-	enc_wcr(0x07, adr_tail >> 8);    // ERXTAILH
+	enc_wcr(0x06, adr_tail &  0xFF, 0); // ERXTAILL
+	enc_wcr(0x07, adr_tail >> 8, 0);    // ERXTAILH
 
 	if (pkt_valid == 1)
 	{
@@ -262,17 +284,8 @@ static void eth_rx_packet(eth_hdr *frame)
 
 void eth_tx_packet(void)
 {
-	eth_hdr *frame;
-	frame = (eth_hdr *)net_tx_buf;
-	frame->mac_s[0] = host_mac[0];
-	frame->mac_s[1] = host_mac[1];
-	frame->mac_s[2] = host_mac[2];
-	frame->mac_s[3] = host_mac[3];
-	frame->mac_s[4] = host_mac[4];
-	frame->mac_s[5] = host_mac[5];
-
-//	uart_puts("eth_tx_packet()\r\n");
-//	dump(net_tx_buf, net_tx_len);
+	u8 regs[4];
+	
 	if (status.link == 0)
 	{
 		D_ETH_TX("TX ! LINK\r\n");
@@ -280,7 +293,19 @@ void eth_tx_packet(void)
 	}
 	
 	while (status.tx)
+	{
+#ifndef ETH_IT_TX
+		u8 v;
+		enc_bxsel(3);
+		/* Read back ECON1 to get TXRTS value */
+		v = enc_rcr(0x1E);
+		/* If TXRTS is cleared, transmit is finished */
+		if ((v & 0x02) == 0)
+			status.tx = 0;
+#else
 		uart_putc('.');
+#endif
+	}
 	
 #ifdef DEBUG_ETH_TX
 	D_ETH_TX("PKT_TX: len=");
@@ -288,42 +313,24 @@ void eth_tx_packet(void)
 	D_ETH_TX("\r\n");
 #endif
 	
-	/* Clear TXIF */
-	enc_bxsel(0);
-	enc_bfsc(0x1C, 0x08, 0);
-				
-	//enc_w_pt(ENC_PT_GPWR, 0x00);
+	/* Update General Purpose Write Pointer */
 	enc_wgpwrpt(0x0000);
+	/* Copy frame to ENC memory */
 	enc_wtxdata(net_tx_len, net_tx_buf);
 	
-	enc_bxsel(0);
-	
-	/* Update TX start */
-	enc_wcr(0x01, 0x00); // ETXSTH
-	enc_wcr(0x00, 0x00); // ETXSTL
-	
-	/* Update TX length */
-	enc_wcr(0x03, net_tx_len >>   8); // ETXLENH
-	enc_wcr(0x02, net_tx_len & 0xFF); // ETXLENL
+	/* Update TX start address */
+	regs[0] = 0x00; // ETXSTL
+	regs[1] = 0x00; // ETXSTH
+	/* Update TX length        */
+	regs[2] = (net_tx_len & 0xFF); // ETXLENL
+	regs[3] = (net_tx_len >>   8); // ETXLENH
+	/* Write multiple registers (using unbanked access) */
+	enc_wcr(0x80, (u32)&regs, 4);
 
 	status.tx = 1;
 	
 	/* Set TXRTS to start transmit */
-	enc_bfsc(0x1E, 0x02, 1);
-
-#ifndef ETH_IT_TX
-	enc_bxsel(3);
-	while(1)
-	{
-		u8 v;
-		/* Read back ECON1 to get TXRTS value */
-		v = enc_rcr(0x1E);
-		/* If TXRTS is cleared, transmit is finished */
-		if ((v & 0x02) == 0)
-			break;
-	}
-	status.tx = 0;
-#endif
+	enc_sbi(0xD4);
 }
 
 void eth_interrupt(void)
@@ -396,10 +403,10 @@ u32 enc_phy_r(u8 radr)
 	/* Select Bank 2 */
 	enc_bxsel(2);
 	/* Select required PHY register (MIREGADR) */
-	enc_wcr(0x14, radr);
-	enc_wcr(0x15, 0x01);
+	enc_wcr(0x14, radr, 0);
+	enc_wcr(0x15, 0x01, 0);
 	/* Start MII Read (MICMD=0x01) */
-	enc_wcr(0x12, 0x01);
+	enc_wcr(0x12, 0x01, 0);
 	/* Select Bank 3 */
 	enc_bxsel(3);
 	/* Wait read end */
@@ -411,7 +418,7 @@ u32 enc_phy_r(u8 radr)
 	/* Select Bank 2 */
 	enc_bxsel(2);
 	/* Stop MII Read */
-	enc_wcr(0x12, 0x00);
+	enc_wcr(0x12, 0x00, 0);
 	/* Select Bank 3 */
 	enc_bxsel(3);
 	/* Get result from MIRD */
