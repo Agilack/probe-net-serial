@@ -17,7 +17,13 @@
 
 int main(void)
 {
-	uart_puts("\r\nHello World !\r\n");
+	int i;
+	
+	while(1)
+	{
+		uart_puts("10\r\nHello World !\r\n");
+		for (i = 0; i < 0x10000; i++);
+	}
 
 	while(1);
 }

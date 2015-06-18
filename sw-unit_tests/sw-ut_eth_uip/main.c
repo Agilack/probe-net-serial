@@ -74,6 +74,11 @@ void net_wr(u8 *data, int len)
 	net_tx_pend = 1;
 }
 
+void cmd_end(void)
+{
+	uip_close();
+}
+
 void net_app_callback(void)
 {
 	struct app_state *s = (struct app_state *)&(uip_conn->appstate);
@@ -84,13 +89,37 @@ void net_app_callback(void)
 		PSOCK_INIT(&s->sout, s->inputbuf, sizeof(s->inputbuf) - 1);
 		PT_INIT(&s->outputpt);
 		
-		net_wr((u8 *)"Hello World!\r\n", 14);
+		// IAC WONT LINEMODE IAC WILL ECHO
+		//net_wr((u8 *)"\377\375\042\377\373\001",6);
 	}
 	if ( uip_newdata() && (uip_datalen() > 0) )
 	{
+		int len;
+		u8 *d;
+		int j;
+		
 		uart_puts("APP: newdata\r\n");
 		
-		uip_close();
+		len = uip_datalen();
+		d = (u8 *)uip_appdata;
+
+		for (j = 0; j < len; j++)
+		{
+			uart_putc(d[j]);
+		}
+#ifdef dump_hex
+		for (j = 0; j < len; )
+		{
+			int i;
+			for (i = 0; i < 16; i++, j++)
+			{
+				uart_puthex8(d[j]);
+				uart_putc(' ');
+				if (j == len)
+					break;
+			}
+		}
+#endif
 	}
 	if(uip_closed() || uip_aborted() || uip_timedout())
 	{

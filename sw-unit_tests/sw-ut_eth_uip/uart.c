@@ -42,11 +42,15 @@ void uart_init(void)
 	reg_set(0xE000E104, 0x20); /* NVIC: Enable USART1 interrupt */
 }
 
+void cmd_end(void);
+
 void USART1_IRQHandler(void)
 {
 	u32 c;
 	c = uart_rd();
 	uart_puts("<"); uart_puthex8(c); uart_puts(">");
+	if (c == 'q')
+		cmd_end();
 }
 
 void uart_putc(u8 c)

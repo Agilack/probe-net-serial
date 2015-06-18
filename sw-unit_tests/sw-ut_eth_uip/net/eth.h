@@ -34,8 +34,8 @@ void eth_tx_packet(void);
 
 u32 enc_phy_r(u8 radr);
 
-#define DEBUG_ETH_TX 1
-#define DEBUG_ETH_RX 1
+#define DEBUG_ETH_TX 0
+#define DEBUG_ETH_RX 0
 
 #ifdef DEBUG_ETH_RX
 #define DBG_RX(x) do { uart_puts(x); } while(0);
