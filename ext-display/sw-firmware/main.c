@@ -15,8 +15,6 @@
 #include "spi.h"
 #include "display.h"
 
-static uart_buffer[20];
-
 int main (void)
 {
 	unsigned char c;
