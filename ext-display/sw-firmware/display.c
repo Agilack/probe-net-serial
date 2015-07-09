@@ -55,16 +55,14 @@ void disp_wr(unsigned char c)
 	int index;
 	int i;
 	
-	if ((c >= ' ') && (c <= '~'))
-	{
-		index = c - ' ';
-		for (i = 0; i < 8; i++)
-		{
-			spi_cs(1);
-			spi_wr( font[index][i] );
-			spi_cs(0);
-		}
-	}
+	if (c & 0x80)
+		return;
+	
+	index = c - ' ';
+	spi_cs(1);
+	for (i = 0; i < 8; i++)
+		spi_wr( font[index][i] );
+	spi_cs(0);
 }
 
 void disp_init(void)

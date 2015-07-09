@@ -38,10 +38,11 @@ int main (void)
 		{
 			/* Read the received byte */
 			c = SBUF0;
-			/* Send the byte to character generator */
-			disp_wr(c);
 			/* Clear the RI flag */
 			SCON0_RI = 0;
+			
+			/* Send the byte to character generator */
+			disp_wr(c);
 		}
 	}
 }
