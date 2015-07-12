@@ -18,7 +18,8 @@
 int main (void)
 {
 	unsigned char c;
-
+	int state;
+	
 	hw_init();
 
 	disp_init();
@@ -30,19 +31,40 @@ int main (void)
 #endif
 
 	SCON0_RI = 0;
+	state = 0;
+	P0_6;
 	
 	while (1)
 	{
 		/* If the UART Receive Interrupt Flag is set */
 		if (SCON0_RI)
 		{
+			P0_6 = 1;
 			/* Read the received byte */
 			c = SBUF0;
 			/* Clear the RI flag */
 			SCON0_RI = 0;
 			
+			if ((c == '\r') || (c == '\n'))
+			{
+				state = 0;
+				P0_6 = 0;
+				continue;
+			}
+			if (state == 0)
+			{
+				state = 1;
+				if ((c >= '0') && (c <= '9'))
+				{
+					disp_line(c - '0');
+					P0_6 = 0;
+					continue;
+				}
+			}
+			
 			/* Send the byte to character generator */
 			disp_wr(c);
+			P0_6 = 0;
 		}
 	}
 }

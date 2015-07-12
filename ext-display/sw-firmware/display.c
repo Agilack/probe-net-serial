@@ -38,6 +38,24 @@ void disp_clear(void)
 	}
 }
 
+void disp_line(int n)
+{
+	/* Switch to CND mode */
+	P1_0 = 0;
+	/* Set current page */
+	spi_cs(1);
+	spi_wr(0xB0 + n);
+	spi_cs(0);
+	/* Set lower column start address */
+	spi_cs(1);
+	spi_wr(0x21);
+	spi_wr(0x00);
+	spi_wr(0x7F);
+	spi_cs(0);
+	/* Switch back to data */
+	P1_0 = 1;
+}
+
 void disp_splash(void)
 {
 	int i;

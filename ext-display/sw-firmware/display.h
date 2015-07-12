@@ -15,6 +15,7 @@
 
 void disp_init(void);
 void disp_clear(void);
+void disp_line(int n);
 void disp_splash(void);
 void disp_wr(unsigned char c);
 
