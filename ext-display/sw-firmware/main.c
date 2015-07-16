@@ -15,9 +15,12 @@
 #include "spi.h"
 #include "display.h"
 
+static u8 h2b(u8 c);
+
 int main (void)
 {
-	unsigned char c;
+	u8  c;
+	u8  nibble;
 	int state;
 	
 	hw_init();
@@ -32,6 +35,7 @@ int main (void)
 
 	SCON0_RI = 0;
 	state = 0;
+	nibble = 0;
 	P0_6;
 	
 	while (1)
@@ -47,6 +51,8 @@ int main (void)
 			
 			if ((c == '\r') || (c == '\n'))
 			{
+				if (state > 1)
+					disp_line(0);
 				state = 0;
 				P0_6 = 0;
 				continue;
@@ -54,17 +60,65 @@ int main (void)
 			if (state == 0)
 			{
 				state = 1;
-				if ((c >= '0') && (c <= '9'))
+				if ((c >= '0') && (c <= '3'))
 				{
 					disp_line(c - '0');
 					P0_6 = 0;
 					continue;
 				}
+				if (c == '8')
+				{
+					state = 2;
+					disp_draw_front(1);
+					P0_6 = 0;
+					continue;
+				}
+				if (c == '9')
+				{
+					state = 0;
+					disp_draw_front(0);
+					P0_6 = 0;
+					continue;
+				}
+				if (c == 0x1B)
+				{
+					disp_clear();
+					state = 0;
+					P0_6 = 0;
+					continue;
+				}
+				state = 99;
+				continue;
 			}
-			
-			/* Send the byte to character generator */
-			disp_wr(c);
+			if (state == 2)
+			{
+				nibble = h2b(c) << 4;
+				state = 3;
+			}
+			else if (state == 3)
+			{
+				nibble |= h2b(c);
+				disp_wr(nibble);
+				state = 2;
+			}
+			else if (state == 1)
+			{
+				/* Send the byte to character generator */
+				disp_putc(c);
+			}
 			P0_6 = 0;
 		}
 	}
+}
+
+static u8 h2b(u8 c)
+{
+	if ((c >= '0') && (c <= '9'))
+		return (c - '0');
+	if ((c >= 'a') && (c <= 'f'))
+		return (c - 'a' + 10);
+	if ((c >= 'A') && (c <= 'A'))
+		return (c - 'A' + 10);
+	
+	return(0);
 }

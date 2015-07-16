@@ -11,7 +11,7 @@
  # WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ##
 CC = sdcc-sdcc
-CFLAGS = -mmcs51 -I.
+CFLAGS = -mmcs51 -pedantic -DUSE_SPLASH -I.
 
 FW = fw_display
 

@@ -17,31 +17,64 @@
 #include "font.h"
 #include "splash.h"
 
+static char off_start;
+
 void disp_clear(void)
 {
-	int i;
+	int i, j;
 
+	for (j = 0; j < 4; j++)
+	{
+		/* Goto the next line to clear */
+		disp_line(j);
+		/* Clear the first line */
+		for (i = 0; i < 128; i++)
+		{
+			spi_cs(1);
+			spi_wr(0x00);
+			spi_cs(0);
+		}
+	}
+}
+
+void disp_draw_front(int en)
+{
 	/* Set OLED mode to CMD */
 	P1_0 = 0;
-	/* Set lower column start address */
-	spi_cs(1);
-	spi_wr(0x00);
-	spi_cs(0);
-	/* Switch back to data */
-	P1_0 = 1;
 	
-	for (i = 0; i < 128; i++)
+	/* If the "enable" argument is set */
+	if (en)
 	{
+		off_start = 32;
+		/* Set Adressing Mode : Horizontal */
 		spi_cs(1);
+		spi_wr(0x20);
 		spi_wr(0x00);
 		spi_cs(0);
+		/* Set column address */
+		spi_cs(1);
+		spi_wr(0x21);
+		spi_wr(0x00); /* start:  0 */
+		spi_wr(0x1F); /* end  : 31 */
+		spi_cs(0);
 	}
+	else
+	{
+		off_start = 0;
+	}
+	/* Switch back to data */
+	P1_0 = 1;
 }
 
 void disp_line(int n)
 {
 	/* Switch to CND mode */
 	P1_0 = 0;
+	/* Set Adressing Mode : Page Adressing */
+	spi_cs(1);
+	spi_wr(0x20);
+	spi_wr(0x02);
+	spi_cs(0);
 	/* Set current page */
 	spi_cs(1);
 	spi_wr(0xB0 + n);
@@ -49,7 +82,7 @@ void disp_line(int n)
 	/* Set lower column start address */
 	spi_cs(1);
 	spi_wr(0x21);
-	spi_wr(0x00);
+	spi_wr(off_start);
 	spi_wr(0x7F);
 	spi_cs(0);
 	/* Switch back to data */
@@ -60,6 +93,17 @@ void disp_splash(void)
 {
 	int i;
 	
+	disp_line(0);
+	/* Switch to CMD mode */
+	P1_0 = 0;
+	/* Set Adressing Mode : Horizontal */
+	spi_cs(1);
+	spi_wr(0x20);
+	spi_wr(0x00);
+	spi_cs(0);
+	/* Switch back to data */
+	P1_0 = 1;
+	
 	for (i = 0; i < 512; i++)
 	{
 		spi_cs(1);
@@ -68,7 +112,7 @@ void disp_splash(void)
 	}
 }
 
-void disp_wr(unsigned char c)
+void disp_putc(unsigned char c)
 {
 	int index;
 	int i;
@@ -80,6 +124,13 @@ void disp_wr(unsigned char c)
 	spi_cs(1);
 	for (i = 0; i < 8; i++)
 		spi_wr( font[index][i] );
+	spi_cs(0);
+}
+
+void disp_wr(unsigned char v)
+{
+	spi_cs(1);
+	spi_wr(v);
 	spi_cs(0);
 }
 

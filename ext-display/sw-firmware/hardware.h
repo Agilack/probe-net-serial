@@ -18,4 +18,8 @@ void hw_init_spi(void);
 void hw_init_timers(void);
 void hw_init_uart(void);
 
+typedef unsigned long  u32;
+typedef unsigned short u16;
+typedef unsigned char  u8;
+
 #endif
